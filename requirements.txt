@@ -1,0 +1,2 @@
+fly-server >= 1.0.0
+PyJWT>=2.3.0
