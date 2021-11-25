@@ -1,2 +1,5 @@
 /conf/
 __pycache__/
+GTAGS
+GRTAGS
+GPATH
