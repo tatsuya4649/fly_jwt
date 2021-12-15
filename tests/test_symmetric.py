@@ -11,7 +11,6 @@ from fly_jwt.config import _JWTConfig
 import jwt
 import conftest
 
-
 @pytest.fixture(scope="function", autouse=False)
 def init_fly():
     app = Fly()
