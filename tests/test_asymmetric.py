@@ -2,13 +2,14 @@ import pytest
 from fly_jwt import require_jwt
 from fly_jwt.jwt import _fly_jwt
 import jwt
+import conftest
 
 TEST_CONTENT={
     "Hello": "World"
 }
 @pytest.fixture(scope="module", autouse=True)
 def asymmetric_encoded_jwt():
-    with open("server.key") as f:
+    with open(conftest.SECRETKEY) as f:
         key = f.read()
 
     encoded = jwt.encode(
@@ -37,8 +38,8 @@ def test_decode_asymmetric(request_test, init_fly):
     @require_jwt(
         auth_handler=auth,
         algorithm="RS256",
-        private_key_path="server.key",
-        public_key_path="server.pub",
+        private_key_path=conftest.SECRETKEY,
+        public_key_path=conftest.PUBLICKEY,
     )
     @init_fly.get("/")
     def hello(request):

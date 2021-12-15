@@ -7,3 +7,5 @@ GRTAGS
 GPATH
 *.egg-info
 *.pyc
+*.key
+*.pub
