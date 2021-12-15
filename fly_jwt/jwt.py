@@ -11,7 +11,6 @@ def _re_bearer(header_value):
     else:
         return None
 
-FLY_JWT_KEY = "jwt_content"
 def _fly_jwt(request):
     _conf = _fly_jwt._jwt_config
     _debug = _fly_jwt._debug
