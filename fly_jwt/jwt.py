@@ -14,6 +14,7 @@ def _re_bearer(header_value):
 FLY_JWT_KEY = "jwt_content"
 def _fly_jwt(request):
     _conf = _fly_jwt._jwt_config
+    _debug = _fly_jwt._debug
     _auth = _conf.auth_handler
     _func = _conf.success_handler
     if _func is None:
@@ -21,29 +22,39 @@ def _fly_jwt(request):
 
     try:
         jwt = FlyJWT(_conf)
-
         if request.get("header") is None:
-            raise Exception
-
+            raise Exception(
+                    "fly_jwt must have header key in dict of request"
+                    )
         for item in request["header"]:
             if item["name"] == "Authorization" or \
                     item["name"] == "authorization":
                 encoded = _re_bearer(item["value"])
                 if encoded is None:
-                    raise Exception
+                    raise Exception("There is no fly_jwt token in `Authorization: Bear $token$`.")
                 decoded = jwt.decode(encoded)
-                if not _auth(decoded):
-                    raise HTTP401Response
+                try:
+                    res = _auth(decoded)
+                    if res is None or not isinstance(res, bool):
+                        raise TypeError("Return type must be bool type.")
+                    if not res:
+                        raise HTTP401Exception("Authentication failure")
+                    else:
+                        # Successful authentication !
+                        return _func(request)
+                except HTTP401Exception as e:
+                    raise HTTP401Exception(e)
+                except Exception as e:
+                    raise Exception(f"Authentication handler error: {str(e)}")
                 request["jwt_content"] = decoded
-            break
-        # Successful authentication !
-        return _func(request)
+
+        raise HTTP401Response("Not found Authorization item in HTTP request header.")
     except Exception as e:
         _fail = _conf.fail_handler
         if _fail is None:
-            raise HTTP401Exception
+            raise HTTP401Exception(e if _debug else None)
         else:
-            return _fail()
+            return _fail(str(e))
 
 def require_jwt(
     **kwargs
@@ -80,6 +91,7 @@ def require_jwt(
             _fly_jwt
         )
         setattr(_fly_jwt, "_jwt_config", _conf)
+        setattr(_fly_jwt, "_debug", app.is_debug)
         return func
 
     return _jwt

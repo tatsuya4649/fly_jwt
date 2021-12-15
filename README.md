@@ -14,7 +14,7 @@ app = Fly()
 
 @require_jwt(
     algorithm="HS256",
-    private_key_path="conf/server.key",
+    private_key="secret",
 )
 @app.get("/")
 def hello(request):
@@ -40,3 +40,10 @@ if authentication successed, execute `hello` function.
 
 if authentication failed, return 401 response.
 
+# Dependency
+
+* fly
+
+* cryptography
+
+* PyJWT

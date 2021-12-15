@@ -1,18 +1,7 @@
 import pytest
-import sys
-import os
-sys.path.append(
-    os.path.abspath("../fly")
-)
-from fly import Fly
 from fly_jwt import require_jwt
 from fly_jwt.jwt import _fly_jwt
 import jwt
-
-@pytest.fixture(scope="function", autouse=False)
-def init_fly():
-    app = Fly()
-    yield app
 
 TEST_CONTENT={
     "Hello": "World"
