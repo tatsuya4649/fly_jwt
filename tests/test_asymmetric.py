@@ -8,7 +8,7 @@ TEST_CONTENT={
 }
 @pytest.fixture(scope="module", autouse=True)
 def asymmetric_encoded_jwt():
-    with open("conf/server.key") as f:
+    with open("server.key") as f:
         key = f.read()
 
     encoded = jwt.encode(
@@ -37,8 +37,8 @@ def test_decode_asymmetric(request_test, init_fly):
     @require_jwt(
         auth_handler=auth,
         algorithm="RS256",
-        private_key_path="conf/server.key",
-        public_key_path="conf/server.pub",
+        private_key_path="server.key",
+        public_key_path="server.pub",
     )
     @init_fly.get("/")
     def hello(request):

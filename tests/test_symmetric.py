@@ -20,7 +20,7 @@ TEST_CONTENT={
 }
 @pytest.fixture(scope="module", autouse=True)
 def symmetric_encoded_jwt():
-    with open("conf/server.key") as f:
+    with open("server.key") as f:
         key = f.read()
 
     encoded = jwt.encode(
@@ -49,7 +49,7 @@ def test_decode_symmetric(request_test, init_fly):
     @require_jwt(
         auth_handler=auth,
         algorithm="HS256",
-        private_key_path="conf/server.key",
+        private_key_path="server.key",
     )
     @init_fly.get("/")
     def hello(request):
