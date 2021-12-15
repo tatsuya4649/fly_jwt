@@ -6,9 +6,10 @@ sys.path.append(
 )
 from fly import Fly
 from fly_jwt import require_jwt
-from fly_jwt.jwt import __fly_jwt
+from fly_jwt.jwt import _fly_jwt
 from fly_jwt.config import _JWTConfig
 import jwt
+import conftest
 
 @pytest.fixture(scope="function", autouse=False)
 def init_fly():
@@ -20,7 +21,7 @@ TEST_CONTENT={
 }
 @pytest.fixture(scope="module", autouse=True)
 def symmetric_encoded_jwt():
-    with open("conf/server.key") as f:
+    with open(conftest.SECRETKEY) as f:
         key = f.read()
 
     encoded = jwt.encode(
@@ -49,13 +50,13 @@ def test_decode_symmetric(request_test, init_fly):
     @require_jwt(
         auth_handler=auth,
         algorithm="HS256",
-        private_key_path="conf/server.key",
+        private_key_path=conftest.SECRETKEY,
     )
     @init_fly.get("/")
     def hello(request):
         return "Hello World"
 
-    res = __fly_jwt(request_test)
+    res = _fly_jwt(request_test)
     print(f"response: {res}")
     assert(res == "Hello World")
 

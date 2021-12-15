@@ -10,6 +10,7 @@ setup(
     install_requires=_requirements(),
     extras_require={
         "develop": [
+            "pytest >= 6.2.5",
         ]
     },
 )

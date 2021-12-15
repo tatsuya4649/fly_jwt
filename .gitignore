@@ -1,5 +1,11 @@
 /conf/
+/build/
+/dist/
 __pycache__/
 GTAGS
 GRTAGS
 GPATH
+*.egg-info
+*.pyc
+*.key
+*.pub

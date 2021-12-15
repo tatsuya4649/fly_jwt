@@ -1,0 +1,37 @@
+name: Test
+
+on:
+    push:
+        branches:
+            - master
+            - develop
+
+jobs:
+    build_and_test:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                python-version: ["3.6", "3.7", "3.8", "3.9", "3.10-dev"]
+        steps:
+            - uses: actions/checkout@v2
+            - name: Setup Python
+              uses: actions/setup-python@v2
+              with:
+                  python-version: ${{ matrix.python-version }}
+                  architecture: "x64"
+            - name: Get Python version
+              run: python --version
+            - name: Install dependencies
+              run: |
+                  sudo apt update
+                  sudo apt install -y openssl
+                  python -m pip install --upgrade pip
+                  python -m pip install -r requirements.txt
+                  # For test libraries
+                  python -m pip install -r requirements-dev.txt
+            - name: Generate secret/pub key
+              run: |
+                  tests/create_key.sh
+            - name: Run Test in Python${{ matrix.python-version }}
+              run: |
+                  python -m pytest tests -xv
