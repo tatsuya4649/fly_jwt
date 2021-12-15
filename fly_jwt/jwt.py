@@ -12,11 +12,11 @@ def _re_bearer(header_value):
         return None
 
 FLY_JWT_KEY = "jwt_content"
-def __fly_jwt(request):
+def _fly_jwt(request):
     _conf = _fly_jwt._jwt_config
     _auth = _conf.auth_handler
     _func = _conf.success_handler
-    if __func is None:
+    if _func is None:
         raise ValueError("unknown func")
 
     try:
@@ -48,8 +48,8 @@ def __fly_jwt(request):
 def require_jwt(
     **kwargs
 ):
-    def __jwt(func):
-        __conf = _JWTConfig(func, **kwargs)
+    def _jwt(func):
+        _conf = _JWTConfig(func, **kwargs)
 
         if not hasattr(func, "_application"):
             raise ValueError(
@@ -77,12 +77,12 @@ def require_jwt(
         app._change_route(
             route["uri"],
             route["method"],
-            __fly_jwt
+            _fly_jwt
         )
-        setattr(__fly_jwt, "_jwt_config", __conf)
+        setattr(_fly_jwt, "_jwt_config", _conf)
         return func
 
-    return __jwt
+    return _jwt
 
 def require_jwt_conf(conf):
     pass
