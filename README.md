@@ -1,6 +1,8 @@
 
 # JWT for fly
 
+![Test](https://github.com/tatsuya4649/fly_jwt/actions/workflows/test.yaml/badge.svg)
+
 JWT library for [fly web server](https://github.com/tatsuya4649/fly).
 
 ## Hello World
