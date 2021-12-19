@@ -2,7 +2,8 @@ import jwt
 import re
 from .config import _JWTConfig
 from fly import Fly
-from fly.response import HTTP401Exception
+from fly.exceptions import HTTPException, HTTP401Exception, HTTP500Exception
+from fly.response import Response
 
 def _re_bearer(header_value):
     res = re.match(r'^Bearer (.+)$', header_value)
@@ -11,45 +12,84 @@ def _re_bearer(header_value):
     else:
         return None
 
-FLY_JWT_KEY = "jwt_content"
-def __fly_jwt(request):
+def _fly_jwt(request):
     _conf = _fly_jwt._jwt_config
+    _debug = _fly_jwt._debug
     _auth = _conf.auth_handler
     _func = _conf.success_handler
-    if __func is None:
-        raise ValueError("unknown func")
+    if _func is None:
+        raise ValueError("Unknown success handler")
 
     try:
-        jwt = FlyJWT(_conf)
-
+        _jwt = FlyJWT(_conf)
         if request.get("header") is None:
-            raise Exception
-
+            raise HTTP401Exception(
+                    "fly_jwt must have header key in dict of request"
+                    )
         for item in request["header"]:
             if item["name"] == "Authorization" or \
                     item["name"] == "authorization":
                 encoded = _re_bearer(item["value"])
                 if encoded is None:
-                    raise Exception
-                decoded = jwt.decode(encoded)
-                if not _auth(decoded):
-                    raise HTTP401Response
+                    raise HTTP401Exception("There is no fly_jwt token in `Authorization: Bear $token$`.")
+                try:
+                    decoded = _jwt.decode(encoded)
+                except jwt.PyJWTError as e:
+                    raise HTTP401Exception(str(e))
+                except Exception as e:
+                    raise Exception(str(e))
+                try:
+                    res = _auth(decoded)
+                    if res is None or not isinstance(res, bool):
+                        raise TypeError("Return type must be bool type.")
+                    if not res:
+                        raise HTTP401Exception("Authentication failure")
+                    else:
+                        # Successful authentication !
+                        return _func(request)
+                except HTTP401Exception as e:
+                    raise HTTP401Exception(str(e))
+                except Exception as e:
+                    raise Exception(f"Authentication handler error: {str(e)}")
                 request["jwt_content"] = decoded
-            break
-        # Successful authentication !
-        return _func(request)
-    except Exception as e:
+
+        raise HTTP401Exception("Not found Authorization item in HTTP request header.")
+    except HTTP401Exception as e:
         _fail = _conf.fail_handler
         if _fail is None:
-            raise HTTP401Exception
+            res = Response(
+                status_code=401,
+                body=str(e).encode("utf-8") if _debug else None,
+            )
+            return res
         else:
-            return _fail()
+            try:
+                return _fail(str(e))
+            except HTTPException as e:
+                res = Response(
+                    status_code=e.status_code,
+                    header=e.headers,
+                    body=str(e).encode("utf-8") if _debug else None,
+                )
+                return res
+            except Exception as e:
+                res = Response(
+                    status_code=500,
+                    body=str(e).encode("utf-8") if _debug else None,
+                )
+                return res
+    except Exception as e:
+        res = Response(
+            status_code=500,
+            body=str(e).encode("utf-8") if _debug else None,
+        )
+        return res
 
 def require_jwt(
     **kwargs
 ):
-    def __jwt(func):
-        __conf = _JWTConfig(func, **kwargs)
+    def _jwt(func):
+        _conf = _JWTConfig(func, **kwargs)
 
         if not hasattr(func, "_application"):
             raise ValueError(
@@ -77,12 +117,13 @@ def require_jwt(
         app._change_route(
             route["uri"],
             route["method"],
-            __fly_jwt
+            _fly_jwt
         )
-        setattr(__fly_jwt, "_jwt_config", __conf)
+        setattr(_fly_jwt, "_jwt_config", _conf)
+        setattr(_fly_jwt, "_debug", app.is_debug)
         return func
 
-    return __jwt
+    return _jwt
 
 def require_jwt_conf(conf):
     pass

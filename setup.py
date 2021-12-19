@@ -6,7 +6,7 @@ def _requirements():
 
 setup(
     name="fly_jwt",
-    version="0.1.0",
+    version="0.1.1",
     install_requires=_requirements(),
     extras_require={
         "develop": [

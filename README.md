@@ -10,7 +10,7 @@ fly-jwt is JWT library for [fly](https://github.com/tatsuya4649/fly).
 ```python
 
 from fly import Fly
-from fly_jwt import require_jwt, jwt_payload
+from fly_jwt import require_jwt
 
 app = Fly()
 
@@ -19,10 +19,8 @@ app = Fly()
     private_key="secret",
 )
 @app.get("/")
-def hello(request):
-    # How to get a JWT payload
-    payload = jwt_payload(request)
-    return "Hello World"
+def hello(jwt_payload: Request):
+    return f"Hello World {jwt_payload["user_id"]}"
 
 ```
 

@@ -2,7 +2,8 @@ import jwt
 import re
 from .config import _JWTConfig
 from fly import Fly
-from fly.response import HTTP401Exception
+from fly.exceptions import HTTPException, HTTP401Exception, HTTP500Exception
+from fly.response import Response
 
 def _re_bearer(header_value):
     res = re.match(r'^Bearer (.+)$', header_value)
@@ -17,12 +18,12 @@ def _fly_jwt(request):
     _auth = _conf.auth_handler
     _func = _conf.success_handler
     if _func is None:
-        raise ValueError("unknown func")
+        raise ValueError("Unknown success handler")
 
     try:
-        jwt = FlyJWT(_conf)
+        _jwt = FlyJWT(_conf)
         if request.get("header") is None:
-            raise Exception(
+            raise HTTP401Exception(
                     "fly_jwt must have header key in dict of request"
                     )
         for item in request["header"]:
@@ -30,8 +31,13 @@ def _fly_jwt(request):
                     item["name"] == "authorization":
                 encoded = _re_bearer(item["value"])
                 if encoded is None:
-                    raise Exception("There is no fly_jwt token in `Authorization: Bear $token$`.")
-                decoded = jwt.decode(encoded)
+                    raise HTTP401Exception("There is no fly_jwt token in `Authorization: Bear $token$`.")
+                try:
+                    decoded = _jwt.decode(encoded)
+                except jwt.PyJWTError as e:
+                    raise HTTP401Exception(str(e))
+                except Exception as e:
+                    raise Exception(str(e))
                 try:
                     res = _auth(decoded)
                     if res is None or not isinstance(res, bool):
@@ -42,18 +48,42 @@ def _fly_jwt(request):
                         # Successful authentication !
                         return _func(request)
                 except HTTP401Exception as e:
-                    raise HTTP401Exception(e)
+                    raise HTTP401Exception(str(e))
                 except Exception as e:
                     raise Exception(f"Authentication handler error: {str(e)}")
                 request["jwt_content"] = decoded
 
-        raise HTTP401Response("Not found Authorization item in HTTP request header.")
-    except Exception as e:
+        raise HTTP401Exception("Not found Authorization item in HTTP request header.")
+    except HTTP401Exception as e:
         _fail = _conf.fail_handler
         if _fail is None:
-            raise HTTP401Exception(e if _debug else None)
+            res = Response(
+                status_code=401,
+                body=str(e).encode("utf-8") if _debug else None,
+            )
+            return res
         else:
-            return _fail(str(e))
+            try:
+                return _fail(str(e))
+            except HTTPException as e:
+                res = Response(
+                    status_code=e.status_code,
+                    header=e.headers,
+                    body=str(e).encode("utf-8") if _debug else None,
+                )
+                return res
+            except Exception as e:
+                res = Response(
+                    status_code=500,
+                    body=str(e).encode("utf-8") if _debug else None,
+                )
+                return res
+    except Exception as e:
+        res = Response(
+            status_code=500,
+            body=str(e).encode("utf-8") if _debug else None,
+        )
+        return res
 
 def require_jwt(
     **kwargs
