@@ -1,7 +1,6 @@
 import pytest
 from fly import Fly
 from fly.exceptions import HTTP401Exception
-from fly.response import Response
 from fly_jwt import require_jwt
 from fly_jwt.jwt import *
 from fly_jwt.jwt import _fly_jwt
@@ -77,9 +76,8 @@ def test_jwt_fail_handler(token, http_request, init_fly):
     def hello(request):
         return None
 
-    res = _fly_jwt(http_request)
-    assert isinstance(res, Response)
-    assert res.status_code == 500
+    with pytest.raises(Exception):
+        _fly_jwt(http_request)
 
 def test_jwt_fail_handler_no_argument(token, http_request, init_fly):
     @require_jwt(
@@ -92,10 +90,9 @@ def test_jwt_fail_handler_no_argument(token, http_request, init_fly):
     def hello(request):
         return None
 
-    res = _fly_jwt(http_request)
-    print(res.body)
-    assert isinstance(res, Response)
-    assert res.status_code == 500
+    with pytest.raises(TypeError) as e:
+        res = _fly_jwt(http_request)
+    print(e)
 
 
 def test_jwt_fail_handler_no_header(token, init_fly):
@@ -110,9 +107,10 @@ def test_jwt_fail_handler_no_header(token, init_fly):
         return None
 
     http_invalid_request = dict()
-    res = _fly_jwt(http_invalid_request)
-    assert isinstance(res, Response)
-    assert res.status_code == 401
+    with pytest.raises(HTTP401Exception) as e:
+        _fly_jwt(http_invalid_request)
+
+    print(e)
 
 def test_jwt_fail_handler_invalid_token(http_request_invalid_token, init_fly):
     @require_jwt(
@@ -125,10 +123,10 @@ def test_jwt_fail_handler_invalid_token(http_request_invalid_token, init_fly):
     def hello(request):
         return None
 
-    res = _fly_jwt(http_request_invalid_token)
-    print(res.body)
-    assert isinstance(res, Response)
-    assert res.status_code == 401
+    with pytest.raises(HTTP401Exception) as e:
+        _fly_jwt(http_request_invalid_token)
+
+    print(e)
 
 
 def test_jwt_auth_handler_fail(http_request, init_fly):
@@ -141,9 +139,9 @@ def test_jwt_auth_handler_fail(http_request, init_fly):
     def hello(request):
         return None
 
-    res = _fly_jwt(http_request)
-    assert isinstance(res, Response)
-    assert res.status_code == 401
+    with pytest.raises(HTTP401Exception) as e:
+        _fly_jwt(http_request)
+    print(e)
 
 
 def test_jwt_auth_handler_type_error(http_request, init_fly):
@@ -156,6 +154,7 @@ def test_jwt_auth_handler_type_error(http_request, init_fly):
     def hello(request):
         return None
 
-    res = _fly_jwt(http_request)
-    assert isinstance(res, Response)
-    assert res.status_code == 500
+    with pytest.raises(TypeError) as e:
+        _fly_jwt(http_request)
+    print(e)
+

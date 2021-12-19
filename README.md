@@ -14,11 +14,15 @@ from fly_jwt import require_jwt
 
 app = Fly()
 
+def auth_handler(request: Request):
+    return True
+
+@app.get("/")
 @require_jwt(
     algorithm="HS256",
     private_key="secret",
+	auth_handler=auth_handler
 )
-@app.get("/")
 def hello(jwt_payload: Request):
     return f"Hello World {jwt_payload["user_id"]}"
 
