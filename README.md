@@ -10,12 +10,13 @@ fly-jwt is JWT library for [fly](https://github.com/tatsuya4649/fly).
 ```python
 
 from fly import Fly
+from fly.types import Request
 from fly_jwt import require_jwt
 
 app = Fly()
 
-def auth_handler(request: Request):
-    return True
+def auth_handler(payload):
+    return payload["username"] is "test_user"
 
 @app.get("/")
 @require_jwt(
@@ -24,7 +25,7 @@ def auth_handler(request: Request):
 	auth_handler=auth_handler
 )
 def hello(jwt_payload: Request):
-    return f"Hello World {jwt_payload["user_id"]}"
+    return f"Hello World {jwt_payload["username"]}"
 
 ```
 
@@ -36,7 +37,7 @@ GET / HTTP1.1
 .
 . 
 .
-Authorization: Bearer `JWT CONTENT`
+Authorization: Bearer `JWT TOKEN`
 
 ```
 
@@ -46,7 +47,7 @@ if authentication failed, return 401 response.
 
 # Dependency
 
-* fly
+* fly >= 1.3.0
 
 * cryptography
 
