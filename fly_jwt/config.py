@@ -4,12 +4,12 @@ import jwt
 class _JWTConfig:
     def __init__(
         self,
-        success_call,
+        success_call=None,
         **kwargs
     ):
         self._configs = kwargs
 
-        if not callable(success_call):
+        if success_call is not None and not callable(success_call):
             raise TypeError("success_call must be function.")
         self._success_call = success_call
         self.set_algorithm(kwargs.get("algorithm"))
@@ -116,7 +116,7 @@ class _JWTConfig:
         return self._success_call
 
     def set_auth_handler(self, handler):
-        if not callable(handler):
+        if handler is not None and not callable(handler):
             raise TypeError("auth_handler must be callable object")
         self._auth_handler = handler
 

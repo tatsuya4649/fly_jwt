@@ -5,6 +5,7 @@ __pycache__/
 GTAGS
 GRTAGS
 GPATH
+ex.py
 *.egg-info
 *.pyc
 *.key

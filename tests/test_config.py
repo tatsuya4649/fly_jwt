@@ -22,10 +22,6 @@ def jwt_rs_init():
     )
     yield _jwt
 
-def test_config():
-    with pytest.raises(TypeError) as e:
-        _JWTConfig()
-
 def hello():
     print("Hello World")
 
@@ -45,15 +41,6 @@ def test_config_init_algorithm_key():
         _JWTConfig(
             hello,
             algorithm="HS256",
-        )
-
-def test_config_auth_handler_error():
-    # no authentication error
-    with pytest.raises(TypeError) as e:
-        _JWTConfig(
-            hello,
-            algorithm="HS256",
-            private_key="secret",
         )
 
 @pytest.mark.parametrize(
