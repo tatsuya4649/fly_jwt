@@ -6,7 +6,6 @@ sys.path.append(
 )
 from fly import Fly
 from fly_jwt import require_jwt
-from fly_jwt.jwt import _fly_jwt
 from fly_jwt.config import _JWTConfig
 import jwt
 import conftest
@@ -56,7 +55,8 @@ def test_decode_symmetric(request_test, init_fly):
     def hello(request):
         return "Hello World"
 
-    res = _fly_jwt(request_test)
+    func = init_fly.routes[0]["func"]
+    res = func(request_test)
     print(f"response: {res}")
     assert(res == "Hello World")
 

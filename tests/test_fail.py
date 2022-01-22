@@ -3,7 +3,6 @@ from fly import Fly
 from fly.exceptions import HTTP401Exception
 from fly_jwt import require_jwt
 from fly_jwt.jwt import *
-from fly_jwt.jwt import _fly_jwt
 import jwt
 
 def auth_handler(decoded):
@@ -18,10 +17,6 @@ def auth_handler_type_error(decoded):
 
 def fail_handler(error_content):
     raise HTTP401Exception(error_content)
-
-def fail_handler_no_arg():
-    print("FAIL")
-
 
 @pytest.fixture(scope="function", autouse=False)
 def token():
@@ -66,45 +61,31 @@ def http_request_invalid_token(invalid_token):
     yield _req
 
 def test_jwt_fail_handler(token, http_request, init_fly):
-    @require_jwt(
-        auth_handler=auth_handler,
-        algorithm="HS256",
-        private_key="secret",
-        fail_handler=fail_handler
-    )
-    @init_fly.get("/")
     def hello(request):
         return None
+
+    _hello = init_fly.get("/")(hello)
+    _fly_jwt = require_jwt(
+            auth_handler=auth_handler,
+            algorithm="HS256",
+            private_key="secret",
+            fail_handler=fail_handler
+            )(_hello)
 
     with pytest.raises(Exception):
         _fly_jwt(http_request)
 
-def test_jwt_fail_handler_no_argument(token, http_request, init_fly):
-    @require_jwt(
-        auth_handler=auth_handler,
-        algorithm="HS256",
-        private_key="secret",
-        fail_handler=fail_handler_no_arg
-    )
-    @init_fly.get("/")
+def test_jwt_fail_handler_no_header(token, init_fly):
     def hello(request):
         return None
 
-    with pytest.raises(TypeError) as e:
-        res = _fly_jwt(http_request)
-    print(e)
-
-
-def test_jwt_fail_handler_no_header(token, init_fly):
-    @require_jwt(
+    _hello = init_fly.get("/")(hello)
+    _fly_jwt = require_jwt(
         auth_handler=auth_handler,
         algorithm="HS256",
         private_key="secret",
         fail_handler=fail_handler
-    )
-    @init_fly.get("/")
-    def hello(request):
-        return None
+            )(_hello)
 
     http_invalid_request = dict()
     with pytest.raises(HTTP401Exception) as e:
@@ -113,15 +94,16 @@ def test_jwt_fail_handler_no_header(token, init_fly):
     print(e)
 
 def test_jwt_fail_handler_invalid_token(http_request_invalid_token, init_fly):
-    @require_jwt(
+    def hello(request):
+        return None
+
+    _hello = init_fly.get("/")(hello)
+    _fly_jwt = require_jwt(
         auth_handler=auth_handler,
         algorithm="HS256",
         private_key="secret",
         fail_handler=fail_handler
-    )
-    @init_fly.get("/")
-    def hello(request):
-        return None
+            )(_hello)
 
     with pytest.raises(HTTP401Exception) as e:
         _fly_jwt(http_request_invalid_token)
@@ -130,31 +112,31 @@ def test_jwt_fail_handler_invalid_token(http_request_invalid_token, init_fly):
 
 
 def test_jwt_auth_handler_fail(http_request, init_fly):
-    @require_jwt(
-        auth_handler=auth_handler_fail,
-        algorithm="HS256",
-        private_key="secret",
-    )
-    @init_fly.get("/")
     def hello(request):
         return None
 
+    _hello = init_fly.get("/")(hello)
+    _fly_jwt = require_jwt(
+        auth_handler=auth_handler_fail,
+        algorithm="HS256",
+        private_key="secret",
+            )(_hello)
     with pytest.raises(HTTP401Exception) as e:
         _fly_jwt(http_request)
     print(e)
 
 
 def test_jwt_auth_handler_type_error(http_request, init_fly):
-    @require_jwt(
-        auth_handler=auth_handler_type_error,
-        algorithm="HS256",
-        private_key="secret",
-    )
-    @init_fly.get("/")
     def hello(request):
         return None
 
-    with pytest.raises(TypeError) as e:
+    _hello = init_fly.get("/")(hello)
+    _fly_jwt = require_jwt(
+        auth_handler=auth_handler_type_error,
+        algorithm="HS256",
+        private_key="secret",
+            )(_hello)
+    with pytest.raises(HTTP401Exception) as e:
         _fly_jwt(http_request)
     print(e)
 

@@ -22,7 +22,7 @@ def auth_handler(payload):
 @require_jwt(
     algorithm="HS256",
     private_key="secret",
-	auth_handler=auth_handler
+    auth_handler=auth_handler
 )
 def hello(jwt_payload: Request):
     return f"Hello World {jwt_payload["username"]}"

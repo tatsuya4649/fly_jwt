@@ -1,3 +1,3 @@
-fly-server >= 1.3.0
+fly-server >= 1.4.0
 cryptography >= 36.0.1
 PyJWT>=2.3.0
